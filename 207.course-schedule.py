@@ -8,26 +8,33 @@ from lcimports import *
 # @lc code=start
 class Solution:
     def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
-        visited = set()
-        prereq = {i:[] for i in range(numCourses)}
-        for crs, pre in prerequisites:
-            prereq[crs].append(pre)
-        
+        inedges = defaultdict(list)
+        outedges = defaultdict(list)
+        for curr, pre in prerequisites:
+            inedges[curr].append(pre)
+            outedges[pre].append(curr)
+        starts = [c for c in range(numCourses) if len(inedges[c]) == 0]
+        if not starts:
+            return False
+
+        globalvisits = set()
         @lru_cache(None)
-        def dfs(c):
-            visited.add(c)
-            for n in prereq[c]:
-                if n in visited:
-                    return False
-                if not dfs(n):
-                    return False
-            visited.remove(c)
-            return True
-        
-        for i in range(numCourses):
-            if not dfs(i):
+        def hasCycle(start):
+            globalvisits.add(start)
+            visited.add(start)
+            for next in outedges[start]:
+                if next in visited:
+                    return True
+                if hasCycle(next):
+                    return True
+            visited.remove(start)
+            return False
+            
+        visited = set()
+        for start in starts:
+            if hasCycle(start):
                 return False
-        return True
+        return len(globalvisits) == numCourses
         
 # @lc code=end
 
